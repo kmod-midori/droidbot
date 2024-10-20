@@ -9,7 +9,7 @@ class App(object):
     this class describes an app
     """
 
-    def __init__(self, app_path, output_dir=None):
+    def __init__(self, app_path, manifest_path=None, output_dir=None):
         """
         create an App instance
         :param app_path: local file path of app

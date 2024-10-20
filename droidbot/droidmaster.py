@@ -111,7 +111,7 @@ class DroidMaster(object):
         self.device_pool = {}
         self.device_unique_id = 0
 
-        self.app = App(app_path, output_dir=self.output_dir)
+        self.app = App(app_path, manifest_path=None, output_dir=self.output_dir)
         self.qemu_app_hda = "%s_%s" % (self.qemu_hda, self.app.get_package_name())
 
         for i in range(self.device_pool_capacity):
