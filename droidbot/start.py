@@ -89,7 +89,7 @@ def parse_args():
                         help="Ignore Ad views by checking resource_id.")
     parser.add_argument("-replay_output", action="store", dest="replay_output",
                         help="The droidbot output directory being replayed.")
-    parser.add_argument("-manifest_path", action="store", dest="manifest_path",
+    parser.add_argument("-manifest_json_path", action="store", dest="manifest_json_path",
                         help="Path to decoded AndroidManifest.xml file")
     options = parser.parse_args()
     # print options
@@ -168,7 +168,7 @@ def main():
             humanoid=opts.humanoid,
             ignore_ad=opts.ignore_ad,
             replay_output=opts.replay_output,
-            manifest_path=opts.manifest_path)
+            manifest_json_path=opts.manifest_json_path)
         droidbot.start()
     return
 

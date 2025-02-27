@@ -1,15 +1,48 @@
 import logging
 import os
 import hashlib
+import json
+import typing
 from .intent import Intent
 
+def possible_broadcasts_json(receivers: list) -> typing.Set[Intent]:
+    possible_broadcasts = set()
+    for receiver in receivers:
+        actions = []
+        categories = [None]
+        for filter in receiver['filters']:
+            actions.extend(filter['actions'])
+            categories.extend(filter['categories'])
+        for action in actions:
+            for category in categories:
+                intent = Intent(prefix='broadcast', action=action, category=category)
+                possible_broadcasts.add(intent)
+    return possible_broadcasts
+
+def main_activity_json(activities: list) -> typing.Optional[str]:
+    acts = set()
+
+    for activity in activities:
+        for filter in activity['filters']:
+            for action in filter['actions']:
+                if action == "android.intent.action.MAIN":
+                    acts.add(activity['name'])
+            
+            for cat in filter['categories']:
+                if cat == 'android.intent.category.LAUNCHER':
+                    acts.add(activity['name'])
+
+    if acts:
+        return acts.pop()
+    else:
+        return None
 
 class App(object):
     """
     this class describes an app
     """
 
-    def __init__(self, app_path, manifest_path=None, output_dir=None):
+    def __init__(self, app_path, manifest_json_path=None, output_dir=None):
         """
         create an App instance
         :param app_path: local file path of app
@@ -25,14 +58,25 @@ class App(object):
             if not os.path.isdir(output_dir):
                 os.makedirs(output_dir)
 
-        from androguard.core.bytecodes.apk import APK
-        self.apk = APK(self.app_path)
-        self.package_name = self.apk.get_package()
-        self.app_name = self.apk.get_app_name()
-        self.main_activity = self.apk.get_main_activity()
-        self.permissions = self.apk.get_permissions()
-        self.activities = self.apk.get_activities()
-        self.possible_broadcasts = self.get_possible_broadcasts()
+        if manifest_json_path is not None:
+            with open(manifest_json_path, 'r') as f:
+                manifest_json = json.load(f)
+            self.package_name = manifest_json['package_name']
+            self.app_name = 'Unknown'
+            self.main_activity = main_activity_json(manifest_json['activities'])
+            self.permissions = manifest_json['permissions']
+            self.activities = [act['name'] for act in manifest_json['activities']]
+            self.possible_broadcasts = possible_broadcasts_json(manifest_json['receivers'])
+        else:
+            from androguard.core.bytecodes.apk import APK
+            self.apk = APK(self.app_path)
+            self.package_name = self.apk.get_package()
+            self.app_name = self.apk.get_app_name()
+            self.main_activity = self.apk.get_main_activity()
+            self.permissions = self.apk.get_permissions()
+            self.activities = self.apk.get_activities()
+            self.possible_broadcasts = self.get_possible_broadcasts()
+
         self.dumpsys_main_activity = None
         self.hashes = self.get_hashes()
 
